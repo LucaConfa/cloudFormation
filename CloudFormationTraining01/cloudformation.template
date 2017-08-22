@@ -7,24 +7,64 @@
 		"KeyName" : {
 		    "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
             "Type"        : "AWS::EC2::KeyPair::KeyName",
-            "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."	
+            "ConstraintDescription" : "must be the name of an existing EC2 KeyPair.",	
+			"Default": "syd-webserver"
 		},
 		"SSHLocation"    : {
             "Description" : " The IP address range that can be used to SSH to the EC2 instances",
             "Type"        : "String",
             "MinLength"   : "9",
             "MaxLength"   : "18",
-            "Default"     : "0.0.0.0/0",
+            "Default"     : "218.185.237.110/32",
             "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
             "ConstraintDescription" : "must be a valid IP CIDR range of the form x.x.x.x/x."
-        }
+        },
+		"InstanceType" : {
+			"Description": "EC2 webserver instance",
+			"Type"		: "String",
+			"Default"	: "t2.micro", 
+			"AllowedValues" : [
+				"t2.nano",
+				"t2.micro",
+				"t2.small",
+				"t2.medium",
+				"t2.large"
+			]
+		},
+		"DBServerInstanceType": {
+			"Description" : "Choose an instance type",
+			"Type": "String",
+			"ConstraintDescription": "Must be in the list of allowed instance types",
+			"Default" : "db.t2.micro",
+			"AllowedValues": [ "db.t2.micro","db.t2.small","db.t2.medium","db.t2.large","db.m1.small","db.m3.medium","db.m3.large","db.m4.xlarge","db.m4.2xlarge","db.m4.4xlarge"]
+		},
+		"DBName" : {
+			"Description" : "Database name",
+			"Type": "String"
+		},
+		"DBPort" : {
+			"Description" : "Database Port",
+			"Type": "String",
+			"Default": "3306"
+		},
+		"DBUser" : {
+			"Description" : "Database username",
+			"Type": "String",
+			"Default": "root"
+		},
+		"DBPassword" : {
+			"Description" : "Database password",
+			"Type": "String"
+		}
 	},
-
 	"Resources" : {
 		"WebServerInstance01" : {
 			"Type" : "AWS::EC2::Instance",
 			"Properties" : {
-               "SecurityGroups" : [
+				"ImageId" : "ami-e2021d81",
+				"InstanceType"		: { "Ref" : "InstanceType" },
+				"KeyName"			: { "Ref" : "KeyName" },
+				"SecurityGroups"	: [
                     {
                         "Ref" : "WebServerSecurityGroup"
                     }
@@ -52,7 +92,19 @@
                     }
                 ]
             }
-        }
+        },
+		"RDSInstance01" : {
+			"Type" : "AWS::RDS::DBInstance",
+			"Properties" : {
+				"DBName": { "Ref" : "DBName" },
+				"DBInstanceClass" : { "Ref" : "DBServerInstanceType" },
+				"Engine" : "MySQL",
+				"PubliclyAccessible": true,
+				"MasterUsername" : { "Ref" : "DBUser" },
+				"MasterUserPassword" : { "Ref" : "DBPassword" },
+				"Port": { "Ref" : "DBPort" }
+			}	
+		}
 	},
 
 	"Outputs" : {
